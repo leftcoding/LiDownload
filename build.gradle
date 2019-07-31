@@ -1,5 +1,19 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
+ext {
+    REMOTE_USERNAME = 'admin'
+    REMOTE_PASSWORD = 'admin123'
 
+    REMOTE_RELEASES_REPO_URL = 'http://nexus.xrjcloud.com/nexus/content/repositories/releases/'
+    REMOTE_SNAPSHOTS_REPO_URL = 'http://nexus.xrjcloud.com/nexus/content/repositories/snapshots/'
+
+    MAVEN_GROUP_ID = 'com.xrjiot.download'
+    MAVEN_VERSION_CODE = 1000
+
+    DOWNLOAD_VERSION_NAME = '1.0.2-SNAPSHOT'
+
+    MAVEN_MODULE_SUPPORT_PREFIX = 'support'
+    MAVEN_MODULE_SUPPORT_PREFIX_REPLACE = 'android'
+}
 buildscript {
     repositories {
         google()

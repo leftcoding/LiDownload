@@ -1,0 +1,60 @@
+apply plugin: 'maven'
+
+task androidSourcesJar(type: Jar) {
+    android.libraryVariants.all { variant ->
+        classifier = 'sources'
+        def sourcesDirs = new ArrayList()
+        sourcesDirs.add(android.sourceSets.main.java.srcDirs)
+        if (variant.flavorName != null && variant.flavorName != "") {
+            sourcesDirs.add(android.sourceSets.(variant.flavorName).java.srcDirs)
+        }
+        sourcesDirs.add(android.sourceSets.(variant.buildType.name).java.srcDirs)
+        from sourcesDirs
+    }
+}
+
+artifacts {
+    archives androidSourcesJar
+}
+
+// 判断版本是Release or Snapshots
+def isReleaseBuild() {
+    return !DOWNLOAD_VERSION_NAME.contains("SNAPSHOT")
+}
+
+// 获取仓库url
+def getRepositoryUrl() {
+    return isReleaseBuild() ? REMOTE_RELEASES_REPO_URL : REMOTE_SNAPSHOTS_REPO_URL
+}
+
+uploadArchives {
+    android.libraryVariants.all { variant ->
+        if (variant.flavorName != null && variant.flavorName != "") {
+            android.sourceSets.(variant.flavorName).java.srcDirs
+        }
+
+        repositories.mavenDeployer {
+            repository(url: getRepositoryUrl()) {
+                authentication(userName: REMOTE_USERNAME, password: REMOTE_PASSWORD)
+            }
+
+            pom.groupId = MAVEN_GROUP_ID
+            pom.artifactId = project.name.replace("${MAVEN_MODULE_SUPPORT_PREFIX}", "${MAVEN_MODULE_SUPPORT_PREFIX_REPLACE}").replace("_", "-") + (variant.flavorName != null && variant.flavorName != "" ? "-" + variant.flavorName : "")
+            def version = DOWNLOAD_VERSION_NAME
+            switch (project.name) {
+                case "support-download":
+                    version = DOWNLOAD_VERSION_NAME
+                    break
+            }
+            pom.version = version
+            pom.project {
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+}

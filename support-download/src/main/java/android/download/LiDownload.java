@@ -1,30 +1,27 @@
 package android.download;
 
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.liulishuo.okdownload.DownloadListener;
 import com.liulishuo.okdownload.DownloadTask;
 import com.liulishuo.okdownload.StatusUtil;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
 
 public class LiDownload {
-    private Map<Object, DownloadTask> taskMap = new HashMap<>();
+    private Map<String, HashMap<String, DownloadTask>> taskMap = new HashMap<>();
     private int minIntervalMillisCallbackProcess;
     private boolean wifiRequired;
-    private Object tag;
+    private String tag;
     private boolean passIfAlreadyCompleted;
     private File parentPathFile;
 
     private DownloadListener listener;
 
-    public LiDownload(int minIntervalMillisCallbackProcess, boolean wifiRequired, Object tag, boolean passIfAlreadyCompleted, File parentPathFile) {
+    public LiDownload(int minIntervalMillisCallbackProcess, boolean wifiRequired, String tag, boolean passIfAlreadyCompleted, File parentPathFile) {
         this.minIntervalMillisCallbackProcess = minIntervalMillisCallbackProcess;
         this.wifiRequired = wifiRequired;
         this.tag = tag;
@@ -37,40 +34,104 @@ public class LiDownload {
     }
 
     public void start(String url) {
-        enqueue(url, null, false);
+        enqueue(url, null);
     }
 
-    public void start(String url, boolean isBroke) {
-        enqueue(url, null, isBroke);
+    public void start(String url, String fileName) {
+        enqueue(url, fileName);
     }
 
-    private void enqueue(String url, String fileName, boolean isBroke) {
+    private void enqueue(String url, String fileName) {
         if (TextUtils.isEmpty(url)) {
             throw new RuntimeException("url can't be null");
         }
         String md5 = fileToMD5(url);
-        String tag = md5 == null ? url : md5;
-        DownloadTask _task = taskMap.get(tag);
-        boolean isRunning = isTaskRunning(_task);
+        String key = md5 == null ? url : md5;
+        HashMap<String, DownloadTask> tasks = taskMap.get(tag);
+        DownloadTask downloadTask = null;
+        if (tasks != null && !tasks.isEmpty()) {
+            downloadTask = tasks.get(key);
+        }
+        boolean isRunning = isTaskRunning(downloadTask);
         if (isRunning) {
-            if (!isBroke) {
+            return;
+        }
+        if (passIfAlreadyCompleted) {
+            if (downloadTask != null) {
+                downloadTask.enqueue(listener);
                 return;
             }
-            _task.cancel();
         }
+
         DownloadTask task = new DownloadTask.Builder(url, parentPathFile)
                 .setFilename(fileName)
                 .setMinIntervalMillisCallbackProcess(minIntervalMillisCallbackProcess)
-                .setPassIfAlreadyCompleted(wifiRequired)
+                .setPassIfAlreadyCompleted(passIfAlreadyCompleted)
+                .setWifiRequired(wifiRequired)
                 .build();
         task.enqueue(listener);
-        taskMap.put(tag, task);
+        if (tasks == null) {
+            tasks = new HashMap<>();
+        }
+        tasks.put(key, task);
+        taskMap.put(tag, tasks);
+    }
+
+    public void clear() {
+        DownloadTask downloadTask;
+        HashMap<String, DownloadTask> tasks;
+        for (Map.Entry<String, HashMap<String, DownloadTask>> entry : taskMap.entrySet()) {
+            tasks = entry.getValue();
+            if (tasks != null && !tasks.isEmpty()) {
+                for (Map.Entry<String, DownloadTask> task : tasks.entrySet()) {
+                    downloadTask = task.getValue();
+                    downloadTask.cancel();
+                }
+            }
+        }
+    }
+
+    public void clearByTag(String tag) {
+        HashMap<String, DownloadTask> tasks;
+        for (Map.Entry<String, HashMap<String, DownloadTask>> entry : taskMap.entrySet()) {
+            tasks = entry.getValue();
+            if (tasks != null && !tasks.isEmpty() && TextUtils.equals(tag, entry.getKey())) {
+                for (Map.Entry<String, DownloadTask> task : tasks.entrySet()) {
+                    task.getValue().cancel();
+                }
+            }
+        }
+    }
+
+    public void clear(String url) {
+        HashMap<String, DownloadTask> tasks;
+        for (Map.Entry<String, HashMap<String, DownloadTask>> entry : taskMap.entrySet()) {
+            tasks = entry.getValue();
+            if (tasks != null && !tasks.isEmpty() && TextUtils.equals(entry.getKey(), tag)) {
+                for (Map.Entry<String, DownloadTask> task : tasks.entrySet()) {
+                    if (TextUtils.equals(tag(url), task.getKey())) {
+                        final DownloadTask downloadTask = task.getValue();
+                        downloadTask.cancel();
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    private String tag(String url) {
+        String md5 = fileToMD5(url);
+        return md5 == null ? url : md5;
     }
 
     public static class Builder {
         private int minIntervalMillisCallbackProcess;
         private boolean wifiRequired;
-        private Object tag;
+        private String tag = String.valueOf(System.currentTimeMillis());
         private boolean passIfAlreadyCompleted;
         private File parentPathFile;
 
@@ -87,7 +148,7 @@ public class LiDownload {
             return this;
         }
 
-        public Builder setTag(Object tag) {
+        public Builder setTag(String tag) {
             this.tag = tag;
             return this;
         }
@@ -110,7 +171,7 @@ public class LiDownload {
         }
     }
 
-    public static String fileToMD5(String filePath) {
+    private static String fileToMD5(String filePath) {
         try {
             MessageDigest digest = MessageDigest.getInstance("MD5");
             digest.update(filePath.getBytes());
@@ -122,9 +183,9 @@ public class LiDownload {
     }
 
     private static String convertHashToString(byte[] md5Bytes) {
-        StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < md5Bytes.length; i++) {
-            buf.append(Integer.toString((md5Bytes[i] & 0xff) + 0x100, 16).substring(1));
+        StringBuilder buf = new StringBuilder();
+        for (byte md5Byte : md5Bytes) {
+            buf.append(Integer.toString((md5Byte & 0xff) + 0x100, 16).substring(1));
         }
         return buf.toString().toUpperCase();
     }

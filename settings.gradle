@@ -1,1 +1,1 @@
-include ':app', ':support_download'
+include ':app', ':support-download'

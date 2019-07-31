@@ -37,17 +37,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final static String url1 = "http://b9.market.mi-img.com/download/AppStore/07106345123d84a1118ef62a0cf3d8b0c8c10bb8d/com.bfhd.bookhome.apk";
     private final static String url2 = "http://b8.market.mi-img.com/download/AppStore/0f7f1a5b279ca44b3012bb8ca9fa7c00d278840cd/hw.code.learningcloud.apk";
     private final static String url3 = "http://b9.market.xiaomi.com/download/AppStore/011ac54a116d544b920574f23ee10f9b66e0779e9/io.suzhi8.H5870BC5B.apk";
+    private final static String url4 = "https://ali-fir-pro-binary.fir.im/3a0cdaed66ed97d176fe9bf21f468faf5578d428.apk?auth_key=1564125122-0-0-86a99a75d25df67e792fd50b1eebb8f9";
 
     Button down;
     Button down1;
     Button down2;
     Button down3;
+    Button clear;
+    Button clearAll;
+    Button clearTag;
+
     LiDownload download;
     File file;
 
     long totalLength;
     String readableTotalLength;
     private DownloadTask task;
+    String curUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,12 +71,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         down3 = findViewById(R.id.down_3);
         down3.setOnClickListener(this);
 
+        clear = findViewById(R.id.clear);
+        clear.setOnClickListener(this);
+
+        clearAll = findViewById(R.id.clear_all);
+        clearAll.setOnClickListener(this);
+
+        clearTag = findViewById(R.id.clear_tag);
+        clearTag.setOnClickListener(this);
+
+
         File root = Environment.getExternalStorageDirectory().getAbsoluteFile();
         file = new File(root, "lidownload");
         download = new LiDownload.Builder()
                 .setParentPathFile(file)
                 .setMinIntervalMillisCallbackProcess(30)
                 .setPassIfAlreadyCompleted(false)
+                .setTag(TAG)
                 .builder();
         download.setListener(downloadListener1);
     }
@@ -78,34 +95,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.clear_tag:
+                download.clearByTag(TAG);
+                break;
+            case R.id.clear_all:
+                download.clear();
+                break;
+            case R.id.clear:
+                download.clear(curUrl);
+                break;
             case R.id.down_1:
+                curUrl = url1;
                 download.start(url1);
                 break;
             case R.id.down_2:
-//                DownloadTask task3 = new DownloadTask.Builder(url1, file)
-////                    .setFilename(filename)
-//                        // the minimal interval millisecond for callback progress
-//                        .setMinIntervalMillisCallbackProcess(30)
-//                        // do re-download even if the task has already been completed in the past.
-//                        .setPassIfAlreadyCompleted(false)
-//                        .build();
-//
-//                task3.enqueue(downloadListener4WithSpeed);
+                curUrl = url2;
                 download.start(url2);
                 break;
             case R.id.down_3:
-//                DownloadTask task2 = new DownloadTask.Builder(url2, file)
-////                    .setFilename(filename)
-//                        // the minimal interval millisecond for callback progress
-//                        .setMinIntervalMillisCallbackProcess(30)
-//                        // do re-download even if the task has already been completed in the past.
-//                        .setPassIfAlreadyCompleted(false)
-//                        .build();
-//
-//                task2.enqueue(downloadListener4WithSpeed);
+                curUrl = url3;
                 download.start(url3);
                 break;
             case R.id.down:
+                curUrl = url3;
                 task = new DownloadTask.Builder(url3, file)
 //                    .setFilename(filename)
                         // the minimal interval millisecond for callback progress
@@ -164,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull SpeedCalculator taskSpeed) {
-            Log.d(TAG, ">>taskEnd" + task.getFile());
+            Log.d(TAG, ">>taskEnd" + task.getFile() + ",cause:" + cause.toString() + ",realCause:" + realCause.toString());
         }
     };
 
@@ -176,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         public void retry(@NonNull DownloadTask task, @NonNull ResumeFailedCause cause) {
-
+            Log.d(TAG, ">>taskEnd" + task.getFile() + ",cause:" + cause.toString());
         }
 
         @Override
@@ -191,7 +203,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
-            Log.d(TAG, ">>taskEnd:" + task.getFile());
+            Log.d(TAG, ">>taskEnd" + task.getFile() + ",cause:" + cause.toString());
         }
     };
 
