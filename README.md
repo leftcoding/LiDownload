@@ -1,8 +1,14 @@
-### LiDownload
+### liDownload
 
 基于 `OkDownload` 做二次封装
 
 ### 使用
+
+#####  Maven 库引入
+
+```java
+implementation 'android.ling.download:download:0.0.3'
+```
 
 ##### 1.初始化
 
