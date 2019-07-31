@@ -29,3 +29,4 @@ dependencies {
 }
 
 apply from: '../nexus-push.gradle'
+apply from: '../upload-jcenter.gradle'

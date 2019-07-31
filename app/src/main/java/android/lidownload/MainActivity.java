@@ -4,10 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.usage.ExternalStorageStats;
-import android.download.DownloadListener;
 import android.download.LiDownload;
-import android.download.Listener;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -15,7 +12,6 @@ import android.view.View;
 import android.widget.Button;
 
 import com.liulishuo.okdownload.DownloadTask;
-import com.liulishuo.okdownload.OkDownload;
 import com.liulishuo.okdownload.SpeedCalculator;
 import com.liulishuo.okdownload.core.Util;
 import com.liulishuo.okdownload.core.breakpoint.BlockInfo;
@@ -27,7 +23,6 @@ import com.liulishuo.okdownload.core.listener.DownloadListener4WithSpeed;
 import com.liulishuo.okdownload.core.listener.assist.Listener1Assist;
 import com.liulishuo.okdownload.core.listener.assist.Listener4SpeedAssistExtend;
 
-import java.io.Externalizable;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +31,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final static String TAG = "MainActivity";
     private final static String url1 = "http://b9.market.mi-img.com/download/AppStore/07106345123d84a1118ef62a0cf3d8b0c8c10bb8d/com.bfhd.bookhome.apk";
     private final static String url2 = "http://b8.market.mi-img.com/download/AppStore/0f7f1a5b279ca44b3012bb8ca9fa7c00d278840cd/hw.code.learningcloud.apk";
-    private final static String url3 = "http://b9.market.xiaomi.com/download/AppStore/011ac54a116d544b920574f23ee10f9b66e0779e9/io.suzhi8.H5870BC5B.apk";
+    private final static String URL3 = "http://b9.market.xiaomi.com/download/AppStore/011ac54a116d544b920574f23ee10f9b66e0779e9/io.suzhi8.H5870BC5B.apk";
     private final static String url4 = "https://ali-fir-pro-binary.fir.im/3a0cdaed66ed97d176fe9bf21f468faf5578d428.apk?auth_key=1564125122-0-0-86a99a75d25df67e792fd50b1eebb8f9";
 
     Button down;
@@ -113,12 +108,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 download.start(url2);
                 break;
             case R.id.down_3:
-                curUrl = url3;
-                download.start(url3);
+                curUrl = URL3;
+                download.start(URL3);
                 break;
             case R.id.down:
-                curUrl = url3;
-                task = new DownloadTask.Builder(url3, file)
+                curUrl = URL3;
+                task = new DownloadTask.Builder(URL3, file)
 //                    .setFilename(filename)
                         // the minimal interval millisecond for callback progress
                         .setMinIntervalMillisCallbackProcess(30)
@@ -177,6 +172,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull SpeedCalculator taskSpeed) {
             Log.d(TAG, ">>taskEnd" + task.getFile() + ",cause:" + cause.toString() + ",realCause:" + realCause.toString());
+            if (cause == EndCause.COMPLETED) {
+                // ... do end things
+            }
         }
     };
 
@@ -204,63 +202,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
             Log.d(TAG, ">>taskEnd" + task.getFile() + ",cause:" + cause.toString());
-        }
-    };
-
-    private Listener listener = new Listener() {
-        @Override
-        public void taskStart(@NonNull DownloadTask task) {
-            Log.d(TAG, ">>taskStart:" + task.getUrl());
-        }
-
-        @Override
-        public void connectTrialStart(@NonNull DownloadTask task, @NonNull Map<String, List<String>> requestHeaderFields) {
-            Log.d(TAG, ">>connectTrialStart");
-        }
-
-        @Override
-        public void connectTrialEnd(@NonNull DownloadTask task, int responseCode, @NonNull Map<String, List<String>> responseHeaderFields) {
-            Log.d(TAG, ">>connectTrialEnd");
-        }
-
-        @Override
-        public void downloadFromBeginning(@NonNull DownloadTask task, @NonNull BreakpointInfo info, @NonNull ResumeFailedCause cause) {
-            Log.d(TAG, ">>downloadFromBeginning");
-        }
-
-        @Override
-        public void downloadFromBreakpoint(@NonNull DownloadTask task, @NonNull BreakpointInfo info) {
-            Log.d(TAG, ">>downloadFromBreakpoint");
-        }
-
-        @Override
-        public void connectStart(@NonNull DownloadTask task, int blockIndex, @NonNull Map<String, List<String>> requestHeaderFields) {
-            Log.d(TAG, ">>connectStart");
-        }
-
-        @Override
-        public void connectEnd(@NonNull DownloadTask task, int blockIndex, int responseCode, @NonNull Map<String, List<String>> responseHeaderFields) {
-            Log.d(TAG, ">>connectEnd");
-        }
-
-        @Override
-        public void fetchStart(@NonNull DownloadTask task, int blockIndex, long contentLength) {
-            Log.d(TAG, ">>fetchStart blockIndex:" + blockIndex + ",contentLength:" + contentLength);
-        }
-
-        @Override
-        public void fetchProgress(@NonNull DownloadTask task, int blockIndex, long increaseBytes) {
-            Log.d(TAG, ">>fetchProgress getId:" + task.getId() + "blockIndex:" + blockIndex + ",increaseBytes:" + increaseBytes);
-        }
-
-        @Override
-        public void fetchEnd(@NonNull DownloadTask task, int blockIndex, long contentLength) {
-            Log.d(TAG, ">>fetchEnd blockIndex:" + blockIndex + ",contentLength:" + contentLength);
-        }
-
-        @Override
-        public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause) {
-            Log.d(TAG, ">>taskEnd" + task.getFile());
         }
     };
 
